@@ -18,7 +18,9 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
+                dir('frontend') {
+                    sh "docker build -t ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
+                }
             }
         }
 
@@ -45,3 +47,4 @@ pipeline {
         }
     }
 }
+
