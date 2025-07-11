@@ -1,0 +1,37 @@
+pipeline {
+  agent any
+
+  environment {
+    AWS_REGION = 'ap-south-1'
+    FRONT_ECR = '123456789012.dkr.ecr.ap-south-1.amazonaws.com/frontend:v1'
+  }
+
+  stages {
+    stage('Checkout Code') {
+      steps {
+        git branch: 'main',
+            url: 'https://github.com/logicofsohaib/soil.git'
+      }
+    }
+
+    stage('Build Frontend Docker Image') {
+      steps {
+        dir('frontend') {
+          sh 'docker build -t $FRONT_ECR .'
+        }
+      }
+    }
+
+    stage('Login to AWS ECR') {
+      steps {
+        sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-south-1.amazonaws.com'
+      }
+    }
+
+    stage('Push Image to ECR') {
+      steps {
+        sh 'docker push $FRONT_ECR'
+      }
+    }
+  }
+}
