@@ -6,7 +6,7 @@ pipeline {
         ECR_REGISTRY = '123456789012.dkr.ecr.ap-south-1.amazonaws.com'
         IMAGE_NAME = 'frontend'
         IMAGE_TAG = 'v1'
-        AWS_CREDENTIALS_ID = 'aws-ecr-token'  // yeh aapke Jenkins credentials ka ID hai
+        AWS_CREDENTIALS_ID = 'aws-ecr-token'
     }
 
     stages {
@@ -18,9 +18,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    dockerImage = docker.build("${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}")
-                }
+                sh "docker build -t ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
@@ -36,9 +34,7 @@ pipeline {
 
         stage('Push Image to ECR') {
             steps {
-                script {
-                    dockerImage.push()
-                }
+                sh "docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
     }
