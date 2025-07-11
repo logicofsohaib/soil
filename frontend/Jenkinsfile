@@ -1,37 +1,51 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    AWS_REGION = 'ap-south-1'
-    FRONT_ECR = '123456789012.dkr.ecr.ap-south-1.amazonaws.com/frontend:v1'
-  }
-
-  stages {
-    stage('Checkout Code') {
-      steps {
-        git branch: 'main',
-            url: 'https://github.com/logicofsohaib/soil.git'
-      }
+    environment {
+        AWS_REGION = 'ap-south-1'
+        ECR_REGISTRY = '123456789012.dkr.ecr.ap-south-1.amazonaws.com'
+        IMAGE_NAME = 'frontend'
+        IMAGE_TAG = 'v1'
+        AWS_CREDENTIALS_ID = 'aws-ecr-token'  // yeh aapke Jenkins credentials ka ID hai
     }
 
-    stage('Build Frontend Docker Image') {
-      steps {
-        dir('frontend') {
-          sh 'docker build -t $FRONT_ECR .'
+    stages {
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
         }
-      }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}")
+                }
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS_ID}", usernameVariable: 'AWS_USERNAME', passwordVariable: 'AWS_PASSWORD')]) {
+                    sh """
+                        echo \$AWS_PASSWORD | docker login -u \$AWS_USERNAME --password-stdin ${ECR_REGISTRY}
+                    """
+                }
+            }
+        }
+
+        stage('Push Image to ECR') {
+            steps {
+                script {
+                    dockerImage.push()
+                }
+            }
+        }
     }
 
-    stage('Login to AWS ECR') {
-      steps {
-        sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-south-1.amazonaws.com'
-      }
+    post {
+        always {
+            cleanWs()
+        }
     }
-
-    stage('Push Image to ECR') {
-      steps {
-        sh 'docker push $FRONT_ECR'
-      }
-    }
-  }
 }
