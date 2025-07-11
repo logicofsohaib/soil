@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_REGION = 'ap-south-1'
-        ECR_REGISTRY = '123456789012.dkr.ecr.ap-south-1.amazonaws.com'
+        ECR_REGISTRY = '621096086760.dkr.ecr.ap-south-1.amazonaws.com'
         IMAGE_NAME = 'frontend'
         IMAGE_TAG = 'v1'
         AWS_CREDENTIALS_ID = 'aws-ecr-token'
@@ -47,4 +47,3 @@ pipeline {
         }
     }
 }
-
