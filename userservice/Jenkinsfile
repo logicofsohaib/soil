@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = 'ap-south-1'
+        ECR_REGISTRY = '621096086760.dkr.ecr.ap-south-1.amazonaws.com'
+        IMAGE_NAME = 'user-service'
+        IMAGE_TAG = 'v1'
+        AWS_CREDENTIALS_ID = 'aws-ecr-token'
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('userservice') {
+                    sh "docker build -t ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
+                }
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS_ID}", usernameVariable: 'AWS_USERNAME', passwordVariable: 'AWS_PASSWORD')]) {
+                    sh """
+                        echo \$AWS_PASSWORD | docker login -u \$AWS_USERNAME --password-stdin ${ECR_REGISTRY}
+                    """
+                }
+            }
+        }
+
+        stage('Push Image to ECR') {
+            steps {
+                sh "docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
